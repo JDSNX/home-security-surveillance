@@ -3,7 +3,7 @@ import numpy as np
 
 from datetime import datetime
 
-from modules import YOLO_CFG, YOLO_WEIGHTS, get_classes
+from modules import YOLO_CFG, YOLO_WEIGHTS, detected, get_classes
 
 class HumanDetection:
     def __init__(self, video_channel=None, roi=None, output_name=None):
@@ -50,8 +50,11 @@ class HumanDetection:
                     res = [self.check_intersection(np.array(box), np.array(self.roi)) for box in bboxes]
                 
                     if any(res):
+                        detected("HD", 1)
                         color = (0, 0, 255)
                         cv2.putText(frame, 'SAKPAN ANG BOANG', (40, 70), cv2.FONT_HERSHEY_SIMPLEX, 2, (55, 22, 255), 3)
+                    else:
+                        detected("HD", 0)
 
                 cv2.rectangle(frame,(self.roi[0],self.roi[1]), (self.roi[0]+self.roi[2],self.roi[1]+self.roi[3]), color, 2)
 
@@ -59,6 +62,7 @@ class HumanDetection:
             cv2.imshow("Human Detection", frame)
             
             if cv2.waitKey(1) & 0xFF == ord('q'):
+                detected("HD", "")
                 break
             
         out.release()
