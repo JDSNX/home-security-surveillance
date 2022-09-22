@@ -1,15 +1,20 @@
 import cv2
 import numpy as np
-import matplotlib.pyplot as plt
+
+from datetime import datetime
 
 from modules import YOLO_CFG, YOLO_WEIGHTS, get_classes
 
 class HumanDetection:
-    def __init__(self, video_channel=None, roi=None):
+    def __init__(self, video_channel=None, roi=None, output_name=None):
         self.net = cv2.dnn.readNet(YOLO_WEIGHTS, YOLO_CFG)
         self.model = cv2.dnn_DetectionModel(self.net)
         self.model.setInputParams(size=(320, 320), scale=1/255)
 
+        self.width = int(cv2.CAP_PROP_FRAME_WIDTH)
+        self.height = int(cv2.CAP_PROP_FRAME_HEIGHT)
+        self.fps = int(cv2.CAP_PROP_FPS)
+        self.output_name = f'{datetime.utcnow}_output.avi' if output_name is None else output_name
         self.video_channel = 0 if video_channel is None else video_channel
         self.classes = get_classes()
         self.roi = roi
@@ -26,6 +31,7 @@ class HumanDetection:
         cap = cv2.VideoCapture(self.video_channel)
         cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
         cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+        out = cv2.VideoWriter(self.output_name, cv2.VideoWriter_fourcc(*"MJPG"), self.fps, (self.width, self.height))
 
         while True:
             ret, frame = cap.read()
@@ -41,10 +47,7 @@ class HumanDetection:
             (class_ids, scores, bboxes) =  self.model.detect(frame)
 
             for class_id, score, bbox in zip(class_ids, scores, bboxes):
-                # (x, y, w, h) = bbox
                 class_name = self.classes[class_id]
-
-                pad_w, pad_h = 0, 0#int(0.15*w), int(0.05*h)
                 
                 if class_name == "person":
                     res = [self.check_intersection(np.array(box), np.array(self.roi)) for box in bboxes]
@@ -55,14 +58,13 @@ class HumanDetection:
     
                 cv2.rectangle(frame,(self.roi[0],self.roi[1]), (self.roi[0]+self.roi[2],self.roi[1]+self.roi[3]), color, 2)
 
-                    # cv2.putText(frame, f'{class_name}', (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (55, 22, 255), 1)
-                    # cv2.rectangle(frame, (x+pad_w, y+pad_h), (x+w-pad_w, y+h-pad_h), color, 1)
-
-            cv2.imshow("HumanDetection", frame)
+            out.write(frame)
+            cv2.imshow("Human Detection", frame)
             
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
-
+            
+        out.release()
         cap.release()
         cv2.destroyAllWindows()
 
