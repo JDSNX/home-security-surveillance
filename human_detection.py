@@ -11,10 +11,7 @@ class HumanDetection:
         self.model = cv2.dnn_DetectionModel(self.net)
         self.model.setInputParams(size=(320, 320), scale=1/255)
 
-        self.width = int(cv2.CAP_PROP_FRAME_WIDTH)
-        self.height = int(cv2.CAP_PROP_FRAME_HEIGHT)
-        self.fps = int(cv2.CAP_PROP_FPS)
-        self.output_name = f'{datetime.utcnow}_output.avi' if output_name is None else output_name
+        self.output_name = f'output/{datetime.now().strftime("%d_%m_%Y_%H_%M_%S")}_output.avi' if output_name is None else output_name
         self.video_channel = 0 if video_channel is None else video_channel
         self.classes = get_classes()
         self.roi = roi
@@ -30,8 +27,8 @@ class HumanDetection:
     def detection(self):
         cap = cv2.VideoCapture(self.video_channel)
         cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
-        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
-        out = cv2.VideoWriter(self.output_name, cv2.VideoWriter_fourcc(*"MJPG"), self.fps, (self.width, self.height))
+        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)        
+        out = cv2.VideoWriter(self.output_name, cv2.VideoWriter_fourcc(*"XVID"), 20.0, (1280,720))
 
         while True:
             ret, frame = cap.read()
@@ -55,7 +52,7 @@ class HumanDetection:
                     if any(res):
                         color = (0, 0, 255)
                         cv2.putText(frame, 'SAKPAN ANG BOANG', (40, 70), cv2.FONT_HERSHEY_SIMPLEX, 2, (55, 22, 255), 3)
-    
+
                 cv2.rectangle(frame,(self.roi[0],self.roi[1]), (self.roi[0]+self.roi[2],self.roi[1]+self.roi[3]), color, 2)
 
             out.write(frame)
