@@ -12,6 +12,7 @@ from dotenv import load_dotenv
 from pymongo import MongoClient
 from PIL import Image
 from datetime import datetime
+from modules import detected
 
 class FaceRecognition:
     load_dotenv()
@@ -84,16 +85,18 @@ class FaceRecognition:
                     print(labels[id_])
                     font = cv2.FONT_HERSHEY_SIMPLEX
                     name = labels[id_]
-                    color = (255, 255, 255)
-                    stroke = 2
-                    det = cv2.putText(frame, name, (x, y), font, 1, color, stroke, cv2.LINE_AA)
+                    det = cv2.putText(frame, name, (x, y), font, 1, (255, 255, 255), 2, cv2.LINE_AA)
+                    detected("FR", 1)
+                else:
+                    detected("FR", 0)
 
                 rec = cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 1)
 
             writer.write(frame)
             cv2.imshow('Face Recognition', frame)     
 
-            if cv2.waitKey(1) & 0xFF == 27:
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                detected("HD", "")
                 break
             
         writer.release()
