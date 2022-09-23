@@ -52,7 +52,7 @@ class FaceRecognition:
         recognizer.train(x_train, np.array(y_labels))
         recognizer.save("trainner.yml")
 
-    def recognize(self):
+    def recognition(self):
         recognizer = cv2.face.LBPHFaceRecognizer_create()
         recognizer.read("trainner.yml")
 
@@ -138,7 +138,7 @@ if __name__ == "__main__":
     fr = FaceRecognition()
     
     if args == 'run':
-        fr.recognize()
+        fr.recognition()
 
     elif args == 'train':
         fr.fetch()
