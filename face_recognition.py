@@ -8,15 +8,18 @@ import string
 import random
 import sys
 
+from dotenv import load_dotenv
 from pymongo import MongoClient
 from PIL import Image
 from datetime import datetime
 
 class FaceRecognition:
+    load_dotenv()
+    
     def __init__(self, face_cascade=None, output_file=None):
         self.face_cascade = cv2.CascadeClassifier('data/haarcascade_frontalface_alt2.xml') if face_cascade is None else cv2.CascadeClassifier(face_cascade)
         self.output_file = f'{datetime.now().strftime("%d_%m_%Y_%H_%M_%S")}_video.avi' if output_file is None else output_file
-        self.client = MongoClient("mongodb+srv://jyuviolegrace:androssi@homesecurity.bzuij.mongodb.net/ReactNativeApp?retryWrites=true&w=majority") 
+        self.client = MongoClient(os.getenv('mongodb')) 
 
     def train(self):
         BASE_DIR = os.path.dirname(os.path.abspath(__file__))
