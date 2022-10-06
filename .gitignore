@@ -1,0 +1,9 @@
+__pycache__
+*.env
+*.pickle
+*.avi
+*.mp4
+src/dnn_model
+pysearch
+a.py
+test_modules.py
