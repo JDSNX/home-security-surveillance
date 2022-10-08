@@ -2,7 +2,7 @@ import face_recognition
 import pickle
 import cv2
 
-from modules import detected
+from modules import detected, is_ready
 
 class FaceRecognition:
 
@@ -16,6 +16,8 @@ class FaceRecognition:
         self.output = output
         self.video_channel = video_channel
         self.detection_method = detection_method
+
+        is_ready("face-recognized", True)
 
 
     def face_recognize(self):
@@ -37,6 +39,7 @@ class FaceRecognition:
             encodings = face_recognition.face_encodings(rgb, boxes)
             
             names = []
+            
             if boxes and encodings:
                 for encoding in encodings:
                     matches = face_recognition.compare_faces(self.data["encodings"], encoding)
@@ -60,9 +63,9 @@ class FaceRecognition:
                     bottom = int(bottom * r)
                     left = int(left * r)
 
-                    detected("FR", 1)
+                    detected("face-recognized", True)
                     if name == "Unknown":
-                        detected("FR", 0)
+                        detected("face-recognized", False)
                         color = (0, 0, 255)
 
                     cv2.rectangle(frame, (left, top), (right, bottom),
@@ -70,6 +73,8 @@ class FaceRecognition:
                     y = top - 15 if top - 15 > 15 else top + 15
                     cv2.putText(frame, name, (left, y), cv2.FONT_HERSHEY_SIMPLEX,
                         0.75, color, 2)
+            else:
+                detected("face-recognized", None)
 
             if writer is None and self.output is not None:
                 writer = cv2.VideoWriter(self.output, self.fourcc, 20,
@@ -81,11 +86,11 @@ class FaceRecognition:
             cv2.imshow("Face Recognition", frame)
                     
             if cv2.waitKey(1) & 0xFF == ord('q'):
-                detected("FR", "")
                 break
 
         if writer is not None:
             writer.release()
-            
+        
+        is_ready("face-recognized", False)
         cap.release()
         cv2.destroyAllWindows()

@@ -1,5 +1,6 @@
 import json
 import os
+from typing import Optional
 import urllib.request as rq
 from pymongo import MongoClient
 from dotenv import load_dotenv
@@ -13,11 +14,21 @@ def get_classes():
     return [class_name.strip() for class_name in open("dnn_model/classes.txt").readlines()]
 
 
+def is_ready(type, ready):
+    with open('detect.json') as f:
+        data = json.load(f)
+
+    data[type]['ready'] = ready
+
+    with open('detect.json', "w") as f:
+        json.dump(data, f)
+
+
 def detected(type, is_detected) -> None:
     with open('detect.json') as f:
         data = json.load(f)
 
-    data[type] = is_detected
+    data[type]['found'] = is_detected
 
     with open('detect.json', "w") as f:
         json.dump(data, f)
@@ -26,7 +37,7 @@ def detected(type, is_detected) -> None:
 def get_images():
     try:
         client = MongoClient(os.getenv('mongodb'))
-        db = client.get_database('ReactNativeApp')
+        db = client.get_database(os.getenv('db'))
         print("[INFO] Connecting database...")
         images = db.images
         images.count_documents({})
