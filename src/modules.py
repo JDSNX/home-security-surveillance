@@ -58,5 +58,3 @@ def get_images():
         print(f"[ERROR] Something happened on getting image...")
     else:
         print(f"[INFO] Dataset complete...")
-
-get_images()
