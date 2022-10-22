@@ -11,7 +11,7 @@ class EncodeFaces:
     dataset = 'dataset'
     encodings = 'encodings.pickle'
 
-    def __init__(self, detection_method='cnn'):
+    def __init__(self, detection_method='hog'):
         self.detection_method = detection_method
 
 

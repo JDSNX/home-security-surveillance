@@ -1,8 +1,8 @@
 import numpy as np
-import datetime
+from datetime import datetime
 import cv2
 
-from modules import YOLO_CFG, YOLO_WEIGHTS, detected, get_classes
+from modules import YOLO_CFG, YOLO_WEIGHTS, detected, get_classes, is_ready
 
 class HumanDetection:
     
@@ -11,11 +11,13 @@ class HumanDetection:
     model.setInputParams(size=(320, 320), scale=1/255)
 
     def __init__(self, video_channel=0, roi=None, output_name=None):
-        self.output_name = f'output/{datetime.now().strftime("%d_%m_%Y_%H_%M_%S")}_output.avi' \
+        self.output_name = f'output/video/{datetime.now().strftime("%d_%m_%Y_%H_%M_%S")}_output.avi' \
             if output_name is None else output_name
         self.video_channel = video_channel
         self.classes = get_classes()
         self.roi = roi
+
+        is_ready("human-detected", True)
 
 
     def check_intersection(self, a, b):
@@ -53,11 +55,11 @@ class HumanDetection:
                     res = [self.check_intersection(np.array(box), np.array(self.roi)) for box in bboxes]
                 
                     if any(res):
-                        detected("HD", 1)
+                        detected("human-detected", True)
                         color = (0, 0, 255)
                         cv2.putText(frame, 'SAKPAN ANG BOANG', (40, 70), cv2.FONT_HERSHEY_SIMPLEX, 2, (55, 22, 255), 3)
                     else:
-                        detected("HD", 0)
+                        detected("human-detected", False)
 
                 cv2.rectangle(frame,(self.roi[0],self.roi[1]), (self.roi[0]+self.roi[2],self.roi[1]+self.roi[3]), color, 2)
 
@@ -65,9 +67,9 @@ class HumanDetection:
             cv2.imshow("Human Detection", frame)
             
             if cv2.waitKey(1) & 0xFF == ord('q'):
-                detected("HD", "")
                 break
-            
+        
+        is_ready("human-detected", False)
         out.release()
         cap.release()
         cv2.destroyAllWindows()
