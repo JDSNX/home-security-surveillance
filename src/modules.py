@@ -39,22 +39,24 @@ def get_images():
         client = MongoClient(os.getenv('mongodb'))
         db = client.get_database(os.getenv('db'))
         print("[INFO] Connecting database...")
-        images = db.images
+        images = db.tests
         images.count_documents({})
         images = list(images.find())
 
         if os.path.isdir('dataset'):
-            for i, image in enumerate(images):
-                name = image['name']
-                image_url = image['image_url'].split('images/')[1]
-                if not os.path.exists(f'dataset/{name}'):
-                    os.mkdir(f'dataset/{name}')
+            for _, v in enumerate(images):
+                for name, image in v['Photos'].items():
+                    if not os.path.exists(f'dataset/{name}'):
+                        os.mkdir(f'dataset/{name}')
 
-                file = os.path.join(os.getcwd(), f'dataset/{name}', image_url)
-                rq.urlretrieve(image['image_url'], file)            
-                print(f"[INFO] Retrieving images {i+1}/{len(images)}...")
-
+                    for i, iu in enumerate(image):
+                        image_url = iu['image_url'].split('images/')[1]
+                        file = os.path.join(os.getcwd(), f'dataset/{name}', image_url)
+                        rq.urlretrieve(iu['image_url'], file)
+                        print(f"[INFO] Retrieving {name} images {i+1}/{len(image)}...")
     except:
         print(f"[ERROR] Something happened on getting image...")
     else:
         print(f"[INFO] Dataset complete...")
+
+get_images()
