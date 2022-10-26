@@ -9,36 +9,59 @@ YOLO_WEIGHTS = 'dnn_model/yolov4-tiny.weights'
 YOLO_CFG = 'dnn_model/yolov4-tiny.cfg'
 load_dotenv()
 
+client = MongoClient(os.getenv('mongodb'))
+db = client.get_database(os.getenv('db'))
+print("[INFO] Connecting database...")
 
 def get_classes():
     return [class_name.strip() for class_name in open("dnn_model/classes.txt").readlines()]
 
 
 def is_ready(type, ready):
-    with open('detect.json') as f:
-        data = json.load(f)
+    collection = db.detect
 
-    data[type]['ready'] = ready
+    print(f"[INFO] {type} ready - {ready}...")
 
-    with open('detect.json', "w") as f:
-        json.dump(data, f)
+    if type == "face-recognized":
+        collection.update_one(
+            { 'tech': 'face_recognition' },
+            { '$set': {'is_ready': ready},
+            '$currentDate': { 'last_modified': True}}
+        )
+
+    elif type == "human-detected":
+        collection.update_one(
+            { 'tech': 'human_detection' },
+            { '$set': {'is_ready': ready},
+            '$currentDate': { 'last_modified': True}}
+        )
 
 
-def detected(type, is_detected) -> None:
-    with open('detect.json') as f:
-        data = json.load(f)
+def detected(type, is_detected, name: Optional[str]=None) -> None:
+    collection = db.detect
 
-    data[type]['found'] = is_detected
+    print(f"[INFO] {type} detected - {is_detected}...")
 
-    with open('detect.json', "w") as f:
-        json.dump(data, f)
+    if type == "face-recognized":
+        collection.update_one(
+            { 'tech': 'face_recognition' },
+            { '$set': {
+                'is_detected': is_detected,
+                'last_recognized': name
+            },
+            '$currentDate': { 'last_modified': True}}
+        )
+
+    elif type == "human-detected":
+        collection.update_one(
+            { 'tech': 'human_detection' },
+            { '$set': {'is_detected': is_detected},
+            '$currentDate': { 'last_modified': True}}
+        )
 
 
 def get_images():
     try:
-        client = MongoClient(os.getenv('mongodb'))
-        db = client.get_database(os.getenv('db'))
-        print("[INFO] Connecting database...")
         images = db.tests
         images.count_documents({})
         images = list(images.find())
