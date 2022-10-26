@@ -3,7 +3,10 @@ __pycache__
 *.pickle
 *.avi
 *.mp4
-src/dnn_model
+*v3.weights
 pysearch
 a.py
+b.py
 test_modules.py
+JDSNX
+detect.db

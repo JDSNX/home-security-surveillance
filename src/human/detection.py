@@ -54,14 +54,12 @@ class HumanDetection:
                 if class_name == "person":
                     res = [self.check_intersection(np.array(box), np.array(self.roi)) for box in bboxes]
                 
-                    if any(res):
-                        detected("human-detected", True)
-                        color = (0, 0, 255)
-                        cv2.putText(frame, 'SAKPAN ANG BOANG', (40, 70), cv2.FONT_HERSHEY_SIMPLEX, 2, (55, 22, 255), 3)
-                    else:
-                        detected("human-detected", False)
-
-                cv2.rectangle(frame,(self.roi[0],self.roi[1]), (self.roi[0]+self.roi[2],self.roi[1]+self.roi[3]), color, 2)
+                #cv2.rectangle(frame,(self.roi[0],self.roi[1]), (self.roi[0]+self.roi[2],self.roi[1]+self.roi[3]), color, 2)
+            
+            if any(res):
+                detected("human-detected", True)
+            else:
+                detected("human-detected", False)
 
             out.write(frame)
             cv2.imshow("Human Detection", frame)
@@ -70,6 +68,7 @@ class HumanDetection:
                 break
         
         is_ready("human-detected", False)
+        detected("human-detected", False)
         out.release()
         cap.release()
         cv2.destroyAllWindows()

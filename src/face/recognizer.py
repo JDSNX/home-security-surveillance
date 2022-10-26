@@ -1,6 +1,8 @@
+import time
 import face_recognition
 import pickle
 import cv2
+from datetime import datetime
 
 from modules import detected, is_ready
 
@@ -16,6 +18,8 @@ class FaceRecognition:
         self.output = output
         self.video_channel = video_channel
         self.detection_method = detection_method
+        self.authorize_output = 'output/authorize'
+        self.unauthorize_output = 'output/unauthorize'
 
         is_ready("face-recognized", True)
 
@@ -63,34 +67,29 @@ class FaceRecognition:
                     bottom = int(bottom * r)
                     left = int(left * r)
 
-                    detected("face-recognized", True)
                     if name == "Unknown":
-                        detected("face-recognized", False)
+                        detected("face-recognized", False, name)
                         color = (0, 0, 255)
+                        cv2.imwrite(
+                            f'{self.unauthorize_output}/{datetime.now().strftime("%d_%m_%Y_%H_%M")}_{name}.jpg',
+                            frame
+                        )
+                    else:
+                        detected("face-recognized", True, name)
+                        cv2.imwrite(
+                            f'{self.authorize_output}/{datetime.now().strftime("%d_%m_%Y_%H_%M")}_{name}.jpg',
+                            frame
+                        )
 
-                    cv2.rectangle(frame, (left, top), (right, bottom),
-                        color, 2)
-                    y = top - 15 if top - 15 > 15 else top + 15
-                    cv2.putText(frame, name, (left, y), cv2.FONT_HERSHEY_SIMPLEX,
+                    cv2.putText(frame, name, (5, 20), cv2.FONT_HERSHEY_SIMPLEX,
                         0.75, color, 2)
-            else:
-                detected("face-recognized", None)
-
-            if writer is None and self.output is not None:
-                writer = cv2.VideoWriter(self.output, self.fourcc, 20,
-                    (frame.shape[1], frame.shape[0]), True)
-
-            if writer is not None:
-                writer.write(frame)
 
             cv2.imshow("Face Recognition", frame)
                     
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
 
-        if writer is not None:
-            writer.release()
-        
         is_ready("face-recognized", False)
+        detected("face-recognized", False, name)
         cap.release()
         cv2.destroyAllWindows()
