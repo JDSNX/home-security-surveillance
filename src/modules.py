@@ -81,3 +81,12 @@ def get_images():
         print(f"[ERROR] Something happened on getting image...")
     else:
         print(f"[INFO] Dataset complete...")
+
+def create_env():
+    if not os.path.exists('.env'):
+        print('[INFO] Creating .env file...')
+        f = open('.env','a')
+        f.write('mongodb=\n')
+        f.write('db=ReactNativeApp')
+        f.close()
+        print('[INFO] .env file is created...')
