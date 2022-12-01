@@ -29,7 +29,7 @@ class HumanDetection:
         return False if w < 0 or h < 0 else True
 
 
-    def detection(self):
+    async def detection(self):
         cap = cv2.VideoCapture(self.video_channel)
         cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
         cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)        
@@ -57,9 +57,9 @@ class HumanDetection:
                 #cv2.rectangle(frame,(self.roi[0],self.roi[1]), (self.roi[0]+self.roi[2],self.roi[1]+self.roi[3]), color, 2)
             
             if any(res):
-                detected("human-detected", True)
+                await detected("human-detected", True)
             else:
-                detected("human-detected", False)
+                await detected("human-detected", False)
 
             out.write(frame)
             cv2.imshow("Human Detection", frame)
@@ -67,8 +67,8 @@ class HumanDetection:
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
         
-        is_ready("human-detected", False)
-        detected("human-detected", False)
+        await is_ready("human-detected", False)
+        await detected("human-detected", False)
         out.release()
         cap.release()
         cv2.destroyAllWindows()

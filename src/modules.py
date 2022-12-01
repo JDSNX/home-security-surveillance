@@ -37,7 +37,7 @@ def is_ready(type, ready):
         )
 
 
-def detected(type, is_detected, name: Optional[str]=None) -> None:
+async def detected(type, is_detected, name: Optional[str]=None) -> None:
     collection = db.detect
 
     print(f"[INFO] {type} detected - {is_detected}...")
