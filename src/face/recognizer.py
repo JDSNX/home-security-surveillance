@@ -24,7 +24,7 @@ class FaceRecognition:
         is_ready("face-recognized", True)
 
 
-    def face_recognize(self):
+    async def face_recognize(self):
         cap = cv2.VideoCapture(self.video_channel)
         writer = None
 
@@ -68,14 +68,14 @@ class FaceRecognition:
                     left = int(left * r)
 
                     if name == "Unknown":
-                        detected("face-recognized", False, name)
+                        await detected("face-recognized", False, name)
                         color = (0, 0, 255)
                         cv2.imwrite(
                             f'{self.unauthorize_output}/{datetime.now().strftime("%d_%m_%Y_%H_%M")}_{name}.jpg',
                             frame
                         )
                     else:
-                        detected("face-recognized", True, name)
+                        await detected("face-recognized", True, name)
                         cv2.imwrite(
                             f'{self.authorize_output}/{datetime.now().strftime("%d_%m_%Y_%H_%M")}_{name}.jpg',
                             frame
@@ -89,7 +89,7 @@ class FaceRecognition:
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
 
-        is_ready("face-recognized", False)
-        detected("face-recognized", False, name)
+        await is_ready("face-recognized", False)
+        await detected("face-recognized", False, name)
         cap.release()
         cv2.destroyAllWindows()
