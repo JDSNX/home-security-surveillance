@@ -22,7 +22,7 @@ class FaceRecognition:
         self.authorize_output = 'output/authorize'
         self.unauthorize_output = 'output/unauthorize'
 
-        #is_ready("face-recognized", True)
+        is_ready("face-recognized", True)
 
 
     async def face_recognize(self):
@@ -54,7 +54,7 @@ class FaceRecognition:
                 face_distances = face_recognition.face_distance(self.data["encodings"], encoding)
 
                 best_match_index = np.argmin(face_distances)
-                
+
                 if matches[best_match_index]:
                     name = self.data["names"][best_match_index]
                     color = (0, 255, 0)
