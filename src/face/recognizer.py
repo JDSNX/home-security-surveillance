@@ -2,6 +2,7 @@ import time
 import face_recognition
 import pickle
 import cv2
+import numpy as np
 from datetime import datetime
 
 from modules import detected, is_ready
@@ -26,11 +27,9 @@ class FaceRecognition:
 
     async def face_recognize(self):
         cap = cv2.VideoCapture(self.video_channel)
-        writer = None
 
         while True:
             ret, frame = cap.read()
-            color = (0, 255, 0)
 
             if ret is False:
                 print('[ERROR] Something wrong with your camera...')
@@ -42,47 +41,33 @@ class FaceRecognition:
             boxes = face_recognition.face_locations(rgb, model=self.detection_method)
             encodings = face_recognition.face_encodings(rgb, boxes)
             
-            names = []
-            
-            if boxes and encodings:
-                for encoding in encodings:
-                    matches = face_recognition.compare_faces(self.data["encodings"], encoding)
-                    name = "Unknown"
+            for ((top, right, bottom, left), encoding) in zip(boxes, encodings):
+                top = int(top * r)
+                right = int(right * r)
+                bottom = int(bottom * r)
+                left = int(left * r)
 
-                    if True in matches:
-                        matchedIdxs = [i for (i, b) in enumerate(matches) if b]
-                        counts = {}
+                name, color = "Unknown", (0, 0, 255)
 
-                        for i in matchedIdxs:
-                            name = self.data["names"][i]
-                            counts[name] = counts.get(name, 0) + 1
+                matches = face_recognition.compare_faces(self.data["encodings"], encoding)
+                
+                face_distances = face_recognition.face_distance(self.data["encodings"], encoding)
 
-                        name = max(counts, key=counts.get)
+                best_match_index = np.argmin(face_distances)
 
-                    names.append(name)
+                if matches[best_match_index]:
+                    name = self.data["names"][best_match_index]
+                    color = (0, 255, 0)
 
-                for ((top, right, bottom, left), name) in zip(boxes, names):
-                    top = int(top * r)
-                    right = int(right * r)
-                    bottom = int(bottom * r)
-                    left = int(left * r)
+                s = cv2.rectangle(frame, (left, top), (right, bottom), color, 1)
+                cv2.putText(s, name, (left, top - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.75, color, 2)
 
-                    if name == "Unknown":
-                        await detected("face-recognized", False, name)
-                        color = (0, 0, 255)
-                        cv2.imwrite(
-                            f'{self.unauthorize_output}/{datetime.now().strftime("%d_%m_%Y_%H_%M")}_{name}.jpg',
-                            frame
-                        )
-                    else:
-                        await detected("face-recognized", True, name)
-                        cv2.imwrite(
-                            f'{self.authorize_output}/{datetime.now().strftime("%d_%m_%Y_%H_%M")}_{name}.jpg',
-                            frame
-                        )
-
-                    cv2.putText(frame, name, (5, 20), cv2.FONT_HERSHEY_SIMPLEX,
-                        0.75, color, 2)
+                if name == "Unknown":
+                    await detected("face-recognized", False, name)
+                    cv2.imwrite(f'{self.unauthorize_output}/{datetime.now().strftime("%d_%m_%Y_%H_%M")}_{name}.jpg', frame)
+                else:
+                    await detected("face-recognized", True, name)
+                    cv2.imwrite(f'{self.authorize_output}/{datetime.now().strftime("%d_%m_%Y_%H_%M")}_{name}.jpg', frame)
 
             cv2.imshow("Face Recognition", frame)
                     
