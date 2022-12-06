@@ -15,18 +15,23 @@ class FaceRecognition:
     recognize = 'output/authorize'
     unrecognize = 'output/unauthorize'
 
-    def __init__(self, video_channel=0, output='output/video.avi', detection_method='hog'):
+    async def __init__(self, video_channel=0, output='output/video.avi', detection_method='hog'):
         self.output = output
         self.video_channel = video_channel
         self.detection_method = detection_method
         self.authorize_output = 'output/authorize'
         self.unauthorize_output = 'output/unauthorize'
 
-        is_ready("face-recognized", True)
+        await is_ready("face-recognized", True)
 
 
     async def face_recognize(self):
         cap = cv2.VideoCapture(self.video_channel)
+
+        boxes = []
+        encodings = []
+        names = []
+        process_this_frame = True
 
         while True:
             ret, frame = cap.read()
@@ -35,42 +40,46 @@ class FaceRecognition:
                 print('[ERROR] Something wrong with your camera...')
                 break
 
-            rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            r = frame.shape[1] / float(rgb.shape[1])
+            if process_this_frame:
+                small_frame = cv2.resize(frame, (0,0), fx=0.25, fy=0.25)
 
-            boxes = face_recognition.face_locations(rgb, model=self.detection_method)
-            encodings = face_recognition.face_encodings(rgb, boxes)
-            
-            for ((top, right, bottom, left), encoding) in zip(boxes, encodings):
-                top = int(top * r)
-                right = int(right * r)
-                bottom = int(bottom * r)
-                left = int(left * r)
+                rgb_small_frame = small_frame[:,:,::-1]
 
-                name, color = "Unknown", (0, 0, 255)
+                boxes = face_recognition.face_locations(rgb_small_frame)
+                encodings = face_recognition.face_encodings(rgb_small_frame, boxes)
 
-                matches = face_recognition.compare_faces(self.data["encodings"], encoding)
-                
-                face_distances = face_recognition.face_distance(self.data["encodings"], encoding)
-
-                best_match_index = np.argmin(face_distances)
-
-                if matches[best_match_index]:
-                    name = self.data["names"][best_match_index]
-                    color = (0, 255, 0)
-
-                s = cv2.rectangle(frame, (left, top), (right, bottom), color, 1)
-                cv2.putText(s, name, (left, top - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.75, color, 2)
-
-                if name == "Unknown":
-                    await detected("face-recognized", False, name)
-                    cv2.imwrite(f'{self.unauthorize_output}/{datetime.now().strftime("%d_%m_%Y_%H_%M")}_{name}.jpg', frame)
-                else:
-                    await detected("face-recognized", True, name)
-                    cv2.imwrite(f'{self.authorize_output}/{datetime.now().strftime("%d_%m_%Y_%H_%M")}_{name}.jpg', frame)
-
-            cv2.imshow("Face Recognition", frame)
+                names = []
+                for encoding in encodings:
+                    matches = face_recognition.compare_faces(self.data["encodings"], encoding)
+                    name = "Unknown"
                     
+                    face_distances = face_recognition.face_distance(self.data["encodings"], encoding)
+                    best_match_index = np.argmin(face_distances)
+                    
+                    if matches[best_match_index]:
+                        name = self.data["names"][best_match_index]
+
+                    names.append(name)
+
+            process_this_frame = not process_this_frame
+
+            for (top, right, bottom, left), name in zip(boxes, names):
+                top *= 4
+                right *= 4
+                bottom *= 4
+                left *= 4
+
+                cv2.putText(frame, name, (left, top - 5), cv2.FONT_HERSHEY_DUPLEX, 1.0, (255, 255, 255), 1)
+            
+            if name == "Unknown":
+                #await detected("face-recognized", False, name)
+                cv2.imwrite(f'{self.unauthorize_output}/{datetime.now().strftime("%d_%m_%Y_%H_%M")}_{name}.jpg', frame)
+            else:
+                #await detected("face-recognized", True, name)
+                cv2.imwrite(f'{self.authorize_output}/{datetime.now().strftime("%d_%m_%Y_%H_%M")}_{name}.jpg', frame)
+            
+            cv2.imshow('Video', frame)
+
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
 
