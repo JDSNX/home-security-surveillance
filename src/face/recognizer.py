@@ -1,20 +1,22 @@
-import time
-import face_recognition
-import pickle
-import cv2
-import numpy as np
 import asyncio
+import pickle
+import time
 from datetime import datetime
 
-from modules import detected, is_ready, draw_border
+import cv2
+import face_recognition
+import numpy as np
+
+from config import settings
+from modules import detected, draw_border, is_ready
+
 
 class FaceRecognition:
 
-    encodings='encodings.pickle'
+    encodings = settings.encodings
     fourcc = cv2.VideoWriter_fourcc(*"MJPG")
     data = pickle.loads(open(encodings, "rb").read())
-    recognize = 'output/authorize'
-    unrecognize = 'output/unauthorize'
+
 
     def __init__(self, video_channel=0, output='output/video.avi', detection_method='hog'):
         self.output = output
@@ -23,9 +25,8 @@ class FaceRecognition:
         self.authorize_output = 'output/authorize'
         self.unauthorize_output = 'output/unauthorize'
 
-        is_ready("face-recognized", True)
-
     async def face_recognize(self):
+        await is_ready("face-recognized", True)
         cap = cv2.VideoCapture(self.video_channel)
 
         boxes = []
@@ -41,7 +42,7 @@ class FaceRecognition:
                 break
 
             if process_this_frame:
-                small_frame = cv2.resize(frame, (0,0), fx=0.25, fy=0.25)
+                small_frame = cv2.resize(frame, (0,0), fx=0.25, fy=0.25) # type: ignore
 
                 rgb_small_frame = small_frame[:,:,::-1]
 
@@ -71,8 +72,8 @@ class FaceRecognition:
                 bottom *= 4
                 left *= 4
                 
-                await draw_border(frame, (left, top), (right, bottom), color, 2, 10, 20)
-                cv2.putText(frame, name, (left, top - 5), cv2.FONT_HERSHEY_DUPLEX, .75, color, 1)
+                await draw_border(frame, (left, top), (right, bottom), color, 2, 10, 20) # type: ignore
+                cv2.putText(frame, name, (left, top - 5), cv2.FONT_HERSHEY_DUPLEX, .75, color, 1) # type: ignore
             
                 if name == "Unknown":
                     await detected("face-recognized", False, name)
@@ -81,13 +82,13 @@ class FaceRecognition:
                     await detected("face-recognized", True, name)
                     cv2.imwrite(f'{self.authorize_output}/{datetime.now().strftime("%d_%m_%Y_%H_%M")}_{name}.jpg', frame)
             
-            cv2.imshow('Video', frame)
+            cv2.imshow('Face Recognition', frame)
 
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
 
         await is_ready("face-recognized", False)
-        await detected("face-recognized", False, name)
+        await detected("face-recognized", False, name)# type: ignore
 
         cap.release()
         cv2.destroyAllWindows()

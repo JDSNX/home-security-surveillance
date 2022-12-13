@@ -1,27 +1,29 @@
-import sys
 import asyncio
+import sys
 
-if __name__ == "__main__":
-    args = sys.argv[1]
+
+async def main(args: str):
 
     if args == "run":
-        from human.detection import HumanDetection
         from face.recognizer import FaceRecognition
+        from human.detection import HumanDetection
 
-        fr = FaceRecognition(video_channel=0)
-        hd = HumanDetection(video_channel=1)
-
-        asyncio.run(fr.face_recognize())
-        asyncio.run(hd.detection())
+        #await asyncio.create_task(FaceRecognition().face_recognize())
+        await asyncio.create_task(HumanDetection().detection())
 
     elif args == "train":
         from face.encoder import EncodeFaces
-        from modules import get_images, create_env
+        from modules import create_env, get_images
 
-        create_env()
-        get_images()
+        await create_env()
+        await get_images()
         ef = EncodeFaces()
         ef.encode_faces()
 
     else:
         print('[ERROR] Wrong paramater passed...')
+
+if __name__ == "__main__":
+
+    args = sys.argv[1]
+    asyncio.run(main(args))
