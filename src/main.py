@@ -8,7 +8,7 @@ async def main(args: str):
         from face.recognizer import FaceRecognition
         from human.detection import HumanDetection
 
-        #await asyncio.create_task(FaceRecognition().face_recognize())
+        await asyncio.create_task(FaceRecognition().face_recognize())
         await asyncio.create_task(HumanDetection().detection())
 
     elif args == "train":
