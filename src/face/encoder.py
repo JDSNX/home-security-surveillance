@@ -1,15 +1,17 @@
-import face_recognition
-import pickle
-import cv2
 import os
+import pickle
 
+import cv2
+import face_recognition
 from imutils import paths
-            
+
+from config import settings
+
 
 class EncodeFaces:
 
     dataset = 'dataset'
-    encodings = 'encodings.pickle'
+    encodings = settings.encodings
 
     def __init__(self, detection_method='hog'):
         self.detection_method = detection_method
@@ -37,11 +39,17 @@ class EncodeFaces:
                 for encoding in encodings:
                     knownEncodings.append(encoding)
                     knownNames.append(name)
-        except:
+                    
+        except Exception as exc:
             print("[ERROR] Something happened...")
+            print(exc)
+
         else:
             print("[INFO] Serializing encodings...")
-            data = {"encodings": knownEncodings, "names": knownNames}
-            f = open(self.encodings, "wb")
-            f.write(pickle.dumps(data))
-            f.close()
+
+            data = {"encodings": knownEncodings, 
+                    "names": knownNames}
+            with open(self.encodings, "wb") as f:
+                f.write(pickle.dumps(data))
+
+            print("[INFO] Completed...")

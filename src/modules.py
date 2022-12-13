@@ -1,36 +1,37 @@
-import json
 import os
 import urllib.request as rq
-import cv2
-from pymongo import MongoClient
-from dotenv import load_dotenv
 from typing import Optional
 
-YOLO_WEIGHTS = 'dnn_model/yolov4-tiny.weights'
-YOLO_CFG = 'dnn_model/yolov4-tiny.cfg'
-load_dotenv()
+import cv2
+from pymongo import MongoClient
 
-client = MongoClient(os.getenv('mongodb'))
-db = client.get_database(os.getenv('db'))
+from config import settings
+
+client = MongoClient(settings.mongodb)
+
 print("[INFO] Connecting database...")
 
+db = client.get_database(settings.db)
+
 def get_classes():
-    return [class_name.strip() for class_name in open("dnn_model/classes.txt").readlines()]
+    return [class_name.strip() for class_name in open(settings.classes).readlines()]
 
 
-async def is_ready(type, ready):
+async def is_ready(_type: str, ready: bool) -> None:
     collection = db.detect
 
-    print(f"[INFO] {type} ready - {ready}...")
+    ready = "online" if ready else "offline" # type: ignore
 
-    if type == "face-recognized":
+    print(f"[INFO] {_type} is {ready}...")
+
+    if _type == "face-recognized":
         collection.update_one(
             { 'tech': 'face_recognition' },
             { '$set': {'is_ready': ready},
             '$currentDate': { 'last_modified': True}}
         )
 
-    elif type == "human-detected":
+    elif _type == "human-detected":
         collection.update_one(
             { 'tech': 'human_detection' },
             { '$set': {'is_ready': ready},
@@ -38,12 +39,14 @@ async def is_ready(type, ready):
         )
 
 
-async def detected(type, is_detected, name: Optional[str]=None) -> None:
+async def detected(_type: str, is_detected: bool, name: Optional[str]=None) -> None:
     collection = db.detect
 
-    print(f"[INFO] {type} detected - {is_detected}...")
+    is_detected = "detected" if is_detected else "not detected" # type: ignore
 
-    if type == "face-recognized":
+    print(f"[INFO] {_type} is {is_detected}...")
+
+    if _type == "face-recognized":
         collection.update_one(
             { 'tech': 'face_recognition' },
             { '$set': {
@@ -53,7 +56,7 @@ async def detected(type, is_detected, name: Optional[str]=None) -> None:
             '$currentDate': { 'last_modified': True}}
         )
 
-    elif type == "human-detected":
+    elif _type == "human-detected":
         collection.update_one(
             { 'tech': 'human_detection' },
             { '$set': {'is_detected': is_detected},
@@ -64,11 +67,6 @@ async def detected(type, is_detected, name: Optional[str]=None) -> None:
 async def draw_border(img, pt1, pt2, color, thickness, r, d):
     x1, y1 = pt1
     x2, y2 = pt2
-    
-    # x1 = top
-    # x2 = left
-    # x3 = right
-    # x4 = bottom
 
     cv2.line(img, (x1 + r, y1), (x1 + r + d, y1), color, thickness)
     cv2.line(img, (x1, y1 + r), (x1, y1 + r + d), color, thickness)
@@ -87,7 +85,7 @@ async def draw_border(img, pt1, pt2, color, thickness, r, d):
     cv2.ellipse(img, (x2 - r, y2 - r), (r, r), 0, 0, 90, color, thickness)
 
 
-def get_images():
+async def get_images():
     try:
         images = db.tests
         images.count_documents({})
@@ -104,12 +102,14 @@ def get_images():
                         file = os.path.join(os.getcwd(), f'dataset/{name}', image_url)
                         rq.urlretrieve(iu['image_url'], file)
                         print(f"[INFO] Retrieving {name} images {i+1}/{len(image)}...")
-    except:
-        print(f"[ERROR] Something happened on getting image...")
+
+    except Exception as exc:
+        print(f"[ERROR] Something happened on getting image...\n{exc}")
+
     else:
         print(f"[INFO] Dataset complete...")
 
-def create_env():
+async def create_env():
     if not os.path.exists('.env'):
         print('[INFO] Creating .env file...')
         f = open('.env','a')
