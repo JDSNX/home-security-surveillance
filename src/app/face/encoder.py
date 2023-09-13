@@ -1,11 +1,11 @@
 import os
-import pickle
+from pickle import dumps
 
 import cv2
-import face_recognition
+from face_recognition import face_locations, face_encodings
 from imutils import paths
 
-from config import settings
+from config import settings, logger
 
 
 class EncodeFaces:
@@ -19,37 +19,38 @@ class EncodeFaces:
 
     def encode_faces(self):
         try:
-            print("[INFO] Quantifying faces...")
+            logger.info("Quantifying faces...")
             imagePaths = list(paths.list_images(self.dataset))
 
             knownEncodings = []
             knownNames = []
 
             for (i, imagePath) in enumerate(imagePaths):
-                print("[INFO] Processing image {}/{}".format(i + 1, len(imagePaths)))
+                logger.info("Processing image {}/{}".format(i + 1, len(imagePaths)))
                 name = imagePath.split(os.path.sep)[-2]
 
                 image = cv2.imread(imagePath)
                 rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
-                boxes = face_recognition.face_locations(rgb, model=self.detection_method)
+                boxes = face_locations(rgb, model=self.detection_method)
 
-                encodings = face_recognition.face_encodings(rgb, boxes)
+                encodings = face_encodings(rgb, boxes)
 
                 for encoding in encodings:
                     knownEncodings.append(encoding)
                     knownNames.append(name)
                     
         except Exception as exc:
-            print("[ERROR] Something happened...")
-            print(exc)
+            logger.error("Something happened...")
+            logger.info(exc)
+            
 
         else:
-            print("[INFO] Serializing encodings...")
+            logger.info("Serializing encodings...")
 
             data = {"encodings": knownEncodings, 
                     "names": knownNames}
             with open(self.encodings, "wb") as f:
-                f.write(pickle.dumps(data))
+                f.write(dumps(data))
 
-            print("[INFO] Completed...")
+            logger.info("Completed...")

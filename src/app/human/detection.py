@@ -39,26 +39,25 @@ class HumanDetection:
         out = cv2.VideoWriter(self.output_name, cv2.VideoWriter_fourcc(*"XVID"), 20.0, (1280,720))
         res = []
 
+        if self.roi is None:
+            self.roi = cv2.selectROI('roi', frame)
+            cv2.destroyWindow('roi')
+
+
         while True:
             ret, frame = cap.read()
-            color = (255, 255, 255)
             
             if not (cap.isOpened and ret):
                 break
-
-            if self.roi is None:
-                self.roi = cv2.selectROI('roi', frame)
-                cv2.destroyWindow('roi')
-            
+           
             (class_ids, scores, bboxes) =  self.model.detect(frame)
 
-            for class_id, score, bbox in zip(class_ids, scores, bboxes):
+            for class_id, _, _ in zip(class_ids, scores, bboxes):
                 class_name = self.classes[class_id]
                 
                 if class_name == "person":
                     res = [await self.check_intersection(np.array(box), np.array(self.roi)) for box in bboxes]
      
-                cv2.rectangle(frame,(self.roi[0],self.roi[1]), (self.roi[0]+self.roi[2],self.roi[1]+self.roi[3]), color, 2)
 
             if any(res):
                 await detected("human-detected", True)

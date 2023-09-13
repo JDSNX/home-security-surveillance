@@ -1,4 +1,8 @@
 from pydantic import BaseSettings
+import logging
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger()
 
 
 class Settings(BaseSettings):
@@ -10,6 +14,6 @@ class Settings(BaseSettings):
     classes: str
     
     class Config:
-        env_file = ".env"
+        env_file = "../.env"
 
 settings = Settings() # type: ignore

@@ -1,5 +1,6 @@
 import asyncio
 import sys
+from config import logger
 
 
 async def main(args: str):
@@ -21,7 +22,7 @@ async def main(args: str):
         ef.encode_faces()
 
     else:
-        print('[ERROR] Wrong paramater passed...')
+        logger.error('Wrong paramater passed...')
 
 if __name__ == "__main__":
 

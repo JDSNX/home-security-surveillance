@@ -4,10 +4,10 @@ import time
 from datetime import datetime
 
 import cv2
-import face_recognition
+from face_recognition import face_locations, face_encodings, compare_faces, face_distance
 import numpy as np
 
-from config import settings
+from config import settings, logger
 from modules import detected, draw_border, is_ready
 
 
@@ -26,6 +26,7 @@ class FaceRecognition:
         self.unauthorize_output = 'output/unauthorize'
 
     async def face_recognize(self):
+        """Start face recognition"""
         await is_ready("face-recognized", True)
         cap = cv2.VideoCapture(self.video_channel)
 
@@ -38,7 +39,7 @@ class FaceRecognition:
             ret, frame = cap.read()
 
             if ret is False:
-                print('[ERROR] Something wrong with your camera...')
+                logger.info('Something wrong with your camera...')
                 break
 
             if process_this_frame:
@@ -46,16 +47,16 @@ class FaceRecognition:
 
                 rgb_small_frame = small_frame[:,:,::-1]
 
-                boxes = face_recognition.face_locations(rgb_small_frame)
-                encodings = face_recognition.face_encodings(rgb_small_frame, boxes)
+                boxes = face_locations(rgb_small_frame)
+                encodings = face_encodings(rgb_small_frame, boxes)
 
                 names = []
                 name = "Unknown"
                 color = (0, 0, 255)
                 for encoding in encodings:
-                    matches = face_recognition.compare_faces(self.data["encodings"], encoding)
+                    matches = compare_faces(self.data["encodings"], encoding)
                     
-                    face_distances = face_recognition.face_distance(self.data["encodings"], encoding)
+                    face_distances = face_distance(self.data["encodings"], encoding)
                     best_match_index = np.argmin(face_distances)
                     
                     if matches[best_match_index]:
@@ -73,7 +74,6 @@ class FaceRecognition:
                 left *= 4
                 
                 await draw_border(frame, (left, top), (right, bottom), color, 2, 10, 20) # type: ignore
-                cv2.putText(frame, name, (left, top - 5), cv2.FONT_HERSHEY_DUPLEX, .75, color, 1) # type: ignore
             
                 if name == "Unknown":
                     await detected("face-recognized", False, name)

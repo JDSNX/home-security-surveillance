@@ -5,11 +5,11 @@ from typing import Optional
 import cv2
 from pymongo import MongoClient
 
-from config import settings
+from config import settings, logger
 
 client = MongoClient(settings.mongodb)
 
-print("[INFO] Connecting database...")
+logger.info("Connecting database...")
 
 db = client.get_database(settings.db)
 
@@ -22,7 +22,7 @@ async def is_ready(_type: str, ready: bool) -> None:
 
     ready = "online" if ready else "offline" # type: ignore
 
-    print(f"[INFO] {_type} is {ready}...")
+    logger.info(f"{_type} is {ready}...")
 
     if _type == "face-recognized":
         collection.update_one(
@@ -44,7 +44,7 @@ async def detected(_type: str, is_detected: bool, name: Optional[str]=None) -> N
 
     is_detected = "detected" if is_detected else "not detected" # type: ignore
 
-    print(f"[INFO] {_type} is {is_detected}...")
+    logger.info(f"{_type} is {is_detected}...")
 
     if _type == "face-recognized":
         collection.update_one(
@@ -101,19 +101,19 @@ async def get_images():
                         image_url = iu['image_url'].split('images/')[1]
                         file = os.path.join(os.getcwd(), f'dataset/{name}', image_url)
                         rq.urlretrieve(iu['image_url'], file)
-                        print(f"[INFO] Retrieving {name} images {i+1}/{len(image)}...")
+                        logger.info(f"Retrieving {name} images {i+1}/{len(image)}...")
 
     except Exception as exc:
-        print(f"[ERROR] Something happened on getting image...\n{exc}")
+        logger.error(f"Something happened on getting image...\n{exc}")
 
     else:
-        print(f"[INFO] Dataset complete...")
+        logger.info(f"Dataset complete...")
 
 async def create_env():
     if not os.path.exists('.env'):
-        print('[INFO] Creating .env file...')
+        logger.info('Creating .env file...')
         f = open('.env','a')
         f.write('mongodb=\n')
         f.write('db=ReactNativeApp')
         f.close()
-        print('[INFO] .env file is created...')
+        logger.info('.env file is created...')
